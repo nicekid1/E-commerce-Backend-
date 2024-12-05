@@ -27,6 +27,17 @@ router.get('/', async (req, res) => {
   }
 });
 
+// Get all categories
+router.get('/categories', async (req, res) => {
+  try {
+    const categories = await Product.distinct('category', {});
+    res.status(200).json(categories);
+  } catch (error) {
+    console.error('Error fetching categories:', error);
+    res.status(500).json({ message: 'Error fetching categories', error: error.message });
+  }
+});
+
 // Get a product by ID
 router.get('/:id', async (req, res) => {
     try {
@@ -60,19 +71,5 @@ router.delete('/:id', async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 });
-
-// Get all products with optional category filter
-router.get('/', async (req, res) => {
-    const { category } = req.query;
-    const filter = category ? { category } : {};
-
-    try {
-        const products = await Product.find(filter);
-        res.status(200).json(products);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-});
-
 
 module.exports = router;
