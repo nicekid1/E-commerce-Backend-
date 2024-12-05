@@ -14,14 +14,17 @@ router.post('/', async (req, res) => {
     }
 });
 
-// Get all products
+// Get all products with optional category filter with add ?category=category_name to url
 router.get('/', async (req, res) => {
-    try {
-        const products = await Product.find();
-        res.status(200).json(products);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
+  const { category } = req.query;
+  const filter = category ? { category } : {};
+
+  try {
+      const products = await Product.find(filter);
+      res.status(200).json(products);
+  } catch (error) {
+      res.status(500).json({ message: error.message });
+  }
 });
 
 // Get a product by ID
@@ -57,5 +60,19 @@ router.delete('/:id', async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 });
+
+// Get all products with optional category filter
+router.get('/', async (req, res) => {
+    const { category } = req.query;
+    const filter = category ? { category } : {};
+
+    try {
+        const products = await Product.find(filter);
+        res.status(200).json(products);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
 
 module.exports = router;
