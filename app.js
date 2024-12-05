@@ -1,6 +1,8 @@
 const express = require('express');
 const dotenv = require('dotenv');
 const mongoose = require('mongoose');
+const productRoutes = require('./src/routes/productRoutes');
+
 
 
 // Load environment variables
@@ -25,8 +27,12 @@ mongoose.connection.once('open', () => {
 
 // Simple route to test the server
 app.get('/', (req, res) => {
-    res.send('Server is running...');
+    res.send('Welcome to E-commerce APIs');
 });
+
+//Routes
+app.use('/api/products', productRoutes);
+
 
 // Start the server
 const PORT = process.env.PORT || 3000;
