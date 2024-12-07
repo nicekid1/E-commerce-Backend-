@@ -2,6 +2,7 @@ const express = require('express');
 const dotenv = require('dotenv');
 const mongoose = require('mongoose');
 const productRoutes = require('./src/routes/productRoutes');
+const userRoutes = require('./src/routes/userRoutes');
 
 
 
@@ -32,6 +33,7 @@ app.get('/', (req, res) => {
 
 //Routes
 app.use('/api/products', productRoutes);
+app.use('/api/auth', userRoutes)
 
 
 // Start the server
