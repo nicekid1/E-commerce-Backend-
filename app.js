@@ -3,6 +3,7 @@ const dotenv = require('dotenv');
 const mongoose = require('mongoose');
 const productRoutes = require('./src/routes/productRoutes');
 const userRoutes = require('./src/routes/userRoutes');
+const cartRoutes = require('./src/routes/cartRoutes');
 
 
 
@@ -33,7 +34,8 @@ app.get('/', (req, res) => {
 
 //Routes
 app.use('/api/products', productRoutes);
-app.use('/api/auth', userRoutes)
+app.use('/api/auth', userRoutes);
+app.use('/api/cart', cartRoutes)
 
 
 // Start the server
