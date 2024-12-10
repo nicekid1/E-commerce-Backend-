@@ -1,10 +1,11 @@
 const express = require("express");
 const Cart = require("../models/Cart");
 const Product = require("../models/Product");
+const auth = require("../middlewares/auth");
 const router = express.Router();
 
 //add products to the cart
-router.post("/:userId", async (req, res) => {
+router.post("/:userId",auth, async (req, res) => {
   const { productId, quantity } = req.body;
   const { userId } = req.params;
   try {
@@ -32,7 +33,7 @@ router.post("/:userId", async (req, res) => {
 });
 
 //Get user's shopping cart
-router.get('/:userId', async (req, res) => {
+router.get('/:userId',auth, async (req, res) => {
   const { userId } = req.params;
 
   try {

@@ -1,10 +1,11 @@
 const express = require("express");
 const Order = require("../models/Order");
 const Cart = require("../models/Cart");
+const auth = require("../middlewares/auth");
 const router = express.Router();
 
 // Place a new order
-router.post("/:userId", async (req, res) => {
+router.post("/:userId",auth, async (req, res) => {
   const { userId } = req.params;
   try {
     const cart = await Cart.findOne({ user: userId }).populate("items.product");
@@ -43,7 +44,7 @@ router.post("/:userId", async (req, res) => {
 });
 
 // Get all orders
-router.get("/:userId", async (req, res) => {
+router.get("/:userId",auth, async (req, res) => {
   const { userId } = req.params;
   try {
     const orders = await Order.findOne({ user: userId }).populate(
