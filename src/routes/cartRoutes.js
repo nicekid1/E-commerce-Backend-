@@ -18,13 +18,31 @@ router.post("/:userId", async (req, res) => {
       if (existingItem) existingItem.quantity += quantity;
       else cart.items.push({ product: productId, quantity });
       await cart.save();
-    }else{
-      const newCart = new Cart({user:userId, items:[{product:productId, quantity}]})
+    } else {
+      const newCart = new Cart({
+        user: userId,
+        items: [{ product: productId, quantity }],
+      });
       await newCart.save();
     }
-    res.status(200).json({ message: 'Product added to cart' });
+    res.status(200).json({ message: "Product added to cart" });
   } catch (err) {
-    res.status(500).json({ message: 'Error adding product to cart' });
+    res.status(500).json({ message: "Error adding product to cart" });
+  }
+});
+
+//Get user's shopping cart
+router.get('/:userId', async (req, res) => {
+  const { userId } = req.params;
+
+  try {
+    const cart = await Cart.findOne({ user: userId }).populate('items.product');
+    if (!cart) {
+      return res.status(404).json({ message: 'Cart not found' });
+    }
+    res.status(200).json(cart);
+  } catch (err) {
+    res.status(500).json({ message: 'Error retrieving cart' });
   }
 });
 
