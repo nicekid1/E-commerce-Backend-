@@ -1,14 +1,13 @@
 const express = require("express");
 const Order = require("../models/Order");
 const Cart = require("../models/Cart");
-const Product = require("../models/Product");
 const router = express.Router();
 
 // Place a new order
 router.post("/:userId", async (req, res) => {
   const { userId } = req.params;
   try {
-    const cart = await Cart.findOne({ user:userId }).populate("items.product");
+    const cart = await Cart.findOne({ user: userId }).populate("items.product");
     if (!cart || cart.items.length === 0) {
       return res.status(400).json({ message: "Cart is empty" });
     }
@@ -40,6 +39,19 @@ router.post("/:userId", async (req, res) => {
     res
       .status(500)
       .json({ message: "Error placing order", error: err.message });
+  }
+});
+
+// Get all orders
+router.get("/:userId", async (req, res) => {
+  const { userId } = req.params;
+  try {
+    const orders = await Order.findOne({ user: userId }).populate(
+      "items.product"
+    );
+    res.status(200).json(orders);
+  } catch (err) {
+    res.status(500).json({ message: "Error retrieving orders" });
   }
 });
 
