@@ -4,7 +4,7 @@ const Product = require("../models/Product");
 const auth = require("../middlewares/auth");
 
 // Create a new product
-router.post("/",auth, async (req, res) => {
+router.post("/", auth, async (req, res) => {
   try {
     const { name, price, category, description, image } = req.body;
     const product = new Product({ name, price, category, description, image });
@@ -16,7 +16,7 @@ router.post("/",auth, async (req, res) => {
 });
 
 // Get all products with optional category filter with add ?category=category_name to url
-router.get("/",auth, async (req, res) => {
+router.get("/", auth, async (req, res) => {
   const { category } = req.query;
   const filter = category ? { category } : {};
 
@@ -29,7 +29,7 @@ router.get("/",auth, async (req, res) => {
 });
 
 // Get all categories
-router.get("/categories",auth, async (req, res) => {
+router.get("/categories", auth, async (req, res) => {
   try {
     const categories = await Product.distinct("category", {});
     res.status(200).json(categories);
@@ -41,8 +41,25 @@ router.get("/categories",auth, async (req, res) => {
   }
 });
 
+//Get similar products by category
+router.get("/similar/:productId", auth, async (req, res) => {
+  const { productId } = req.params;
+  try {
+    const product = await Product.findById(productId);
+    if (!product) return res.status(404).json({ message: "Product not found" });
+    const similarProducts = await Product.find({
+      category: product.category,
+    }).limit(5);
+    res.status(200).json(similarProducts);
+  } catch (err) {
+    res
+      .status(500)
+      .json({ message: "Error retrieving similar products", error: err });
+  }
+});
+
 // Get a product by ID
-router.get("/:id",auth, async (req, res) => {
+router.get("/:id", auth, async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
     if (!product) return res.status(404).json({ message: "Product not found" });
@@ -53,7 +70,7 @@ router.get("/:id",auth, async (req, res) => {
 });
 
 // Update a product
-router.put("/:id",auth, async (req, res) => {
+router.put("/:id", auth, async (req, res) => {
   try {
     const updates = req.body;
     const product = await Product.findByIdAndUpdate(req.params.id, updates, {
@@ -67,7 +84,7 @@ router.put("/:id",auth, async (req, res) => {
 });
 
 // Delete a product
-router.delete("/:id",auth, async (req, res) => {
+router.delete("/:id", auth, async (req, res) => {
   try {
     const product = await Product.findByIdAndDelete(req.params.id);
     if (!product) return res.status(404).json({ message: "Product not found" });
