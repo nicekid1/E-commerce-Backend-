@@ -6,6 +6,7 @@ const userRoutes = require("./src/routes/userRoutes");
 const cartRoutes = require("./src/routes/cartRoutes");
 const orderRoutes = require("./src/routes/orderRoutes");
 const categoryRoutes = require("./src/routes/categoryRoutes");
+const reviewRoutes = require("./src/routes/reviewRoutes");
 
 // Load environment variables
 dotenv.config();
@@ -39,6 +40,8 @@ app.use("/api/auth", userRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/order", orderRoutes);
 app.use("/api/categories", categoryRoutes);
+app.use("/api/reviews", reviewRoutes);
+
 
 // Start the server
 const PORT = process.env.PORT || 3000;
