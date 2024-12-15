@@ -82,4 +82,14 @@ router.delete("/favorites/:productId", auth, async (req, res) => {
   }
 });
 
+//retrieve all favorites
+router.get('/favorites', auth, async(req,res)=>{
+  try {
+    const user = await User.findById(req.user.userId).populate('favoriteProducts', 'name');
+    res.status(200).json({ favoriteProducts: user.favoriteProducts });
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+})
+
 module.exports = router;
