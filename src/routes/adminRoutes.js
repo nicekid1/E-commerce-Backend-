@@ -4,6 +4,7 @@ const checkRole = require("./../middlewares/checkRole");
 const User = require("../models/User");
 const Product = require("../models/Product");
 const Review = require("../models/Review");
+const DiscountCode = require("../models/DiscountCode");
 
 const router = express.Router();
 
@@ -93,5 +94,28 @@ router.delete("/comments/:id", auth, checkRole, async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 });
+
+// Create discount code
+router.post("/discounts", auth, checkRole, async (req, res) => {
+  const {discountPercentage, expiresAt } = req.body;
+  try {
+    const discount = new DiscountCode({
+      code,
+      discountPercentage,
+      expiresAt,
+    });
+    discount.save();
+    res.status(201).json(discount);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// List of discount codes
+router.get("/discounts", auth, checkRole, async(req,res)=>{});
+
+// Remove discount code
+router.delete("/discounts/:id", auth, checkRole, async(req,res)=>{});
 
 module.exports = router;
