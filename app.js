@@ -7,9 +7,9 @@ const cartRoutes = require("./src/routes/cartRoutes");
 const orderRoutes = require("./src/routes/orderRoutes");
 const categoryRoutes = require("./src/routes/categoryRoutes");
 const reviewRoutes = require("./src/routes/reviewRoutes");
-const paymentRoutes = require('./src/routes/paymentRoutes');
-const adminRoutes = require('./src/routes/adminRoutes');
-
+const paymentRoutes = require("./src/routes/paymentRoutes");
+const adminRoutes = require("./src/routes/adminRoutes");
+const setupSwagger = require("./swagger");
 
 // Load environment variables
 dotenv.config();
@@ -18,6 +18,9 @@ const app = express();
 
 // Middleware to parse JSON
 app.use(express.json());
+
+//Swagger Setting
+setupSwagger(app);
 
 // Connect to MongoDB
 mongoose
@@ -38,15 +41,14 @@ app.get("/", (req, res) => {
 });
 
 //Routes
-app.use("/api/products", productRoutes);
-app.use("/api/user", userRoutes);
-app.use("/api/admin", adminRoutes);
-app.use("/api/cart", cartRoutes);
-app.use("/api/order", orderRoutes);
-app.use("/api/categories", categoryRoutes);
-app.use("/api/reviews", reviewRoutes);
-app.use('/api/payment', paymentRoutes);
-
+app.use("/users", userRoutes);
+app.use("/products", productRoutes);
+app.use("/admin", adminRoutes);
+app.use("/cart", cartRoutes);
+app.use("/orders", orderRoutes);
+app.use("/categories", categoryRoutes);
+app.use("/reviews", reviewRoutes);
+app.use("/payment", paymentRoutes);
 
 // Start the server
 const PORT = process.env.PORT || 3000;

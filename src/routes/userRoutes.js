@@ -1,3 +1,10 @@
+/**
+ * @swagger
+ * tags:
+ *   name: Users
+ *   description: User authentication and favorite product management
+ */
+
 const express = require("express");
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
@@ -6,7 +13,40 @@ const router = express.Router();
 const Product = require("./../models/Product");
 const auth = require("./../middlewares/auth");
 
-//register
+/**
+ * @swagger
+ * /users/register:
+ *   post:
+ *     summary: Register a new user
+ *     tags: [Users]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - username
+ *               - email
+ *               - password
+ *             properties:
+ *               username:
+ *                 type: string
+ *                 example: "john_doe"
+ *               email:
+ *                 type: string
+ *                 example: "john.doe@example.com"
+ *               password:
+ *                 type: string
+ *                 example: "securepassword123"
+ *     responses:
+ *       201:
+ *         description: User registered successfully
+ *       400:
+ *         description: User already exists
+ *       500:
+ *         description: Server error
+ */
 router.post("/register", async (req, res) => {
   const { username, email, password } = req.body;
   try {
@@ -23,7 +63,36 @@ router.post("/register", async (req, res) => {
   }
 });
 
-//login
+/**
+ * @swagger
+ * /users/login:
+ *   post:
+ *     summary: Login an existing user
+ *     tags: [Users]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 example: "john.doe@example.com"
+ *               password:
+ *                 type: string
+ *                 example: "securepassword123"
+ *     responses:
+ *       200:
+ *         description: Login successful, returns JWT token
+ *       400:
+ *         description: Invalid credentials
+ *       500:
+ *         description: Server error
+ */
 router.post("/login", async (req, res) => {
   const { email, password } = req.body;
   try {
@@ -44,7 +113,31 @@ router.post("/login", async (req, res) => {
   }
 });
 
-//Add product to favorites
+/**
+ * @swagger
+ * /users/favorites/{productId}:
+ *   post:
+ *     summary: Add a product to the user's favorites
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: productId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The ID of the product to add to favorites
+ *     responses:
+ *       200:
+ *         description: Product added to favorites
+ *       400:
+ *         description: Product already in favorites
+ *       404:
+ *         description: Product not found
+ *       500:
+ *         description: Server error
+ */
 router.post("/favorites/:productId", auth, async (req, res) => {
   try {
     const product = await Product.findById(req.params.productId);
@@ -65,7 +158,29 @@ router.post("/favorites/:productId", auth, async (req, res) => {
   }
 });
 
-//Remove product from favorites
+/**
+ * @swagger
+ * /users/favorites/{productId}:
+ *   delete:
+ *     summary: Remove a product from the user's favorites
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: productId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The ID of the product to remove from favorites
+ *     responses:
+ *       200:
+ *         description: Product removed from favorites
+ *       404:
+ *         description: Product not found in favorites
+ *       500:
+ *         description: Server error
+ */
 router.delete("/favorites/:productId", auth, async (req, res) => {
   try {
     const user = await User.findById(req.user.userId);
@@ -82,8 +197,21 @@ router.delete("/favorites/:productId", auth, async (req, res) => {
   }
 });
 
-//retrieve all favorites
-router.get('/favorites', auth, async(req,res)=>{
+/**
+ * @swagger
+ * /users/favorites:
+ *   get:
+ *     summary: Retrieve the list of favorite products for the user
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of favorite products
+ *       500:
+ *         description: Server error
+ */
+router.get('/favorites', auth, async (req,res)=>{
   try {
     const user = await User.findById(req.user.userId).populate('favoriteProducts', 'name');
     res.status(200).json({ favoriteProducts: user.favoriteProducts });
