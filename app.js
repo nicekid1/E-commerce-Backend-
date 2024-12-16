@@ -8,6 +8,7 @@ const orderRoutes = require("./src/routes/orderRoutes");
 const categoryRoutes = require("./src/routes/categoryRoutes");
 const reviewRoutes = require("./src/routes/reviewRoutes");
 const paymentRoutes = require('./src/routes/paymentRoutes');
+const adminRoutes = require('./src/routes/adminRoutes');
 
 
 // Load environment variables
@@ -39,6 +40,7 @@ app.get("/", (req, res) => {
 //Routes
 app.use("/api/products", productRoutes);
 app.use("/api/user", userRoutes);
+app.use("/api/admin", adminRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/order", orderRoutes);
 app.use("/api/categories", categoryRoutes);
