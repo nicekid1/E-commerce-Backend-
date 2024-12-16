@@ -97,7 +97,7 @@ router.delete("/comments/:id", auth, checkRole, async (req, res) => {
 
 // Create discount code
 router.post("/discounts", auth, checkRole, async (req, res) => {
-  const {discountPercentage, expiresAt } = req.body;
+  const { discountPercentage, expiresAt } = req.body;
   try {
     const discount = new DiscountCode({
       code,
@@ -113,9 +113,17 @@ router.post("/discounts", auth, checkRole, async (req, res) => {
 });
 
 // List of discount codes
-router.get("/discounts", auth, checkRole, async(req,res)=>{});
+router.get("/discounts", auth, checkRole, async (req, res) => {
+  try {
+    const discountCodes = await DiscountCode.find({});
+    res.status(200).json(discountCodes);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
 
 // Remove discount code
-router.delete("/discounts/:id", auth, checkRole, async(req,res)=>{});
+router.delete("/discounts/:id", auth, checkRole, async (req, res) => {});
 
 module.exports = router;
