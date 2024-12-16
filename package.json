@@ -22,6 +22,7 @@
     "multer": "^1.4.5-lts.1",
     "multer-storage-cloudinary": "^4.0.0",
     "nodemon": "^3.1.7",
+    "uuid": "^11.0.3",
     "zarinpal-checkout": "^0.3.0"
   }
 }
