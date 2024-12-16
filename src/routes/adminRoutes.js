@@ -2,6 +2,7 @@ const express = require("express");
 const auth = require("./../middlewares/auth");
 const checkRole = require("./../middlewares/checkRole");
 const User = require("../models/User");
+const Product = require("../models/Product");
 const router = express.Router();
 
 // List all users
@@ -17,8 +18,8 @@ router.get("/users", auth, checkRole, async (req, res) => {
 // Delete user
 router.delete("/users/:id", auth, checkRole, async (req, res) => {
   try {
-    await User.findByIdAndDelete(req.params.id)
-    res.status(200).json({message:'User deleted'})
+    await User.findByIdAndDelete(req.params.id);
+    res.status(200).json({ message: "User deleted" });
   } catch (err) {
     res.status(500).json({ message: "Server error" });
   }
@@ -27,6 +28,7 @@ router.delete("/users/:id", auth, checkRole, async (req, res) => {
 // List all products
 router.get("/products", auth, checkRole, async (req, res) => {
   try {
+   
   } catch (err) {
     res.status(500).json({ message: "Server error" });
   }
@@ -35,6 +37,8 @@ router.get("/products", auth, checkRole, async (req, res) => {
 // Delete product
 router.delete("/products/:id", auth, checkRole, async (req, res) => {
   try {
+    await Product.findByIdAndDelete(req.params.id);
+    res.status(200).json({ message: "Product deleted" });
   } catch (err) {
     res.status(500).json({ message: "Server error" });
   }
