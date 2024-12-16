@@ -17,6 +17,8 @@ router.get("/users", auth, checkRole, async (req, res) => {
 // Delete user
 router.delete("/users/:id", auth, checkRole, async (req, res) => {
   try {
+    await User.findByIdAndDelete(req.params.id)
+    res.status(200).json({message:'User deleted'})
   } catch (err) {
     res.status(500).json({ message: "Server error" });
   }
