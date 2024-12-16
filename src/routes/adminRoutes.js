@@ -3,6 +3,7 @@ const auth = require("./../middlewares/auth");
 const checkRole = require("./../middlewares/checkRole");
 const User = require("../models/User");
 const Product = require("../models/Product");
+const Review = require("../models/Review");
 const router = express.Router();
 
 // List all users
@@ -48,6 +49,8 @@ router.delete("/products/:id", auth, checkRole, async (req, res) => {
 // List all comments
 router.get("/comments", auth, checkRole, async (req, res) => {
   try {
+    const reviews = await Review.find({});
+    res.status(200).json(reviews);
   } catch (err) {
     res.status(500).json({ message: "Server error" });
   }
