@@ -4,24 +4,34 @@ const checkRole = require("./../middlewares/checkRole");
 const User = require("../models/User");
 const Product = require("../models/Product");
 const Review = require("../models/Review");
+
 const router = express.Router();
 
 // List all users
 router.get("/users", auth, checkRole, async (req, res) => {
   try {
     const users = await User.find({});
+    if (users.length === 0) {
+      return res.status(404).json({ message: "No users found" });
+    }
     res.status(200).json(users);
   } catch (err) {
+    console.error(err);
     res.status(500).json({ message: "Server error" });
   }
 });
 
 // Delete user
 router.delete("/users/:id", auth, checkRole, async (req, res) => {
+  const { id } = req.params;
   try {
-    await User.findByIdAndDelete(req.params.id);
+    const user = await User.findByIdAndDelete(id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
     res.status(200).json({ message: "User deleted" });
   } catch (err) {
+    console.error(err);
     res.status(500).json({ message: "Server error" });
   }
 });
@@ -30,18 +40,27 @@ router.delete("/users/:id", auth, checkRole, async (req, res) => {
 router.get("/products", auth, checkRole, async (req, res) => {
   try {
     const products = await Product.find({});
+    if (products.length === 0) {
+      return res.status(404).json({ message: "No products found" });
+    }
     res.status(200).json(products);
   } catch (err) {
+    console.error(err);
     res.status(500).json({ message: "Server error" });
   }
 });
 
 // Delete product
 router.delete("/products/:id", auth, checkRole, async (req, res) => {
+  const { id } = req.params;
   try {
-    await Product.findByIdAndDelete(req.params.id);
+    const product = await Product.findByIdAndDelete(id);
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
     res.status(200).json({ message: "Product deleted" });
   } catch (err) {
+    console.error(err);
     res.status(500).json({ message: "Server error" });
   }
 });
@@ -50,16 +69,27 @@ router.delete("/products/:id", auth, checkRole, async (req, res) => {
 router.get("/comments", auth, checkRole, async (req, res) => {
   try {
     const reviews = await Review.find({});
+    if (reviews.length === 0) {
+      return res.status(404).json({ message: "No reviews found" });
+    }
     res.status(200).json(reviews);
   } catch (err) {
+    console.error(err);
     res.status(500).json({ message: "Server error" });
   }
 });
 
 // Delete comment
 router.delete("/comments/:id", auth, checkRole, async (req, res) => {
+  const { id } = req.params;
   try {
+    const review = await Review.findByIdAndDelete(id);
+    if (!review) {
+      return res.status(404).json({ message: "Review not found" });
+    }
+    res.status(200).json({ message: "Review deleted" });
   } catch (err) {
+    console.error(err);
     res.status(500).json({ message: "Server error" });
   }
 });
