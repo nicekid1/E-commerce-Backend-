@@ -124,6 +124,16 @@ router.get("/discounts", auth, checkRole, async (req, res) => {
 });
 
 // Remove discount code
-router.delete("/discounts/:id", auth, checkRole, async (req, res) => {});
+router.delete("/discounts/:id", auth, checkRole, async (req, res) => {
+  try {
+    const discountCodes = await DiscountCode.findByIdAndDelete(req.params.id);
+    if (discountCodes)
+      res.status(200).json({ message: "Discount code removed." });
+    else res.status(404).json({ message: "Discount code not found" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
 
 module.exports = router;
