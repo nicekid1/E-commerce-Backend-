@@ -12,6 +12,7 @@ const jwt = require("jsonwebtoken");
 const router = express.Router();
 const Product = require("./../models/Product");
 const auth = require("./../middlewares/auth");
+const { body, validationResult } = require("express-validator");
 
 /**
  * @swagger
@@ -47,21 +48,42 @@ const auth = require("./../middlewares/auth");
  *       500:
  *         description: Server error
  */
-router.post("/register", async (req, res) => {
-  const { username, email, password } = req.body;
-  try {
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({ message: "User already exists" });
+router.post(
+  "/register",
+  [
+    body("username")
+      .notEmpty()
+      .withMessage("Username is required")
+      .isLength({ min: 3 })
+      .withMessage("Username must be at least 3 characters"),
+    body("email").isEmail().withMessage("Invalid email format"),
+    body("password")
+      .isLength({ min: 6 })
+      .withMessage("Password must be at least 6 characters"),
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
     }
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const user = new User({ username, email, password: hashedPassword });
-    await user.save();
-    res.status(201).json({ message: "User registered successfully" });
-  } catch (err) {
-    res.status(500).json({ message: "Server error" });
+
+    const { username, email, password } = req.body;
+    try {
+      const existingUser = await User.findOne({
+        $or: [{ username: username }, { email: email }],
+      });
+      if (existingUser) {
+        return res.status(400).json({ message: "User already exists" });
+      }
+      const hashedPassword = await bcrypt.hash(password, 10);
+      const user = new User({ username, email, password: hashedPassword });
+      await user.save();
+      res.status(201).json({ message: "User registered successfully" });
+    } catch (err) {
+      res.status(500).json({ message: "Server error" });
+    }
   }
-});
+);
 
 /**
  * @swagger
@@ -93,25 +115,41 @@ router.post("/register", async (req, res) => {
  *       500:
  *         description: Server error
  */
-router.post("/login", async (req, res) => {
-  const { email, password } = req.body;
-  try {
-    const user = await User.findOne({ email });
-    if (!user)
-      return res.status(404).json({ message: "Email or password is invalid" });
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch)
-      return res.status(400).json({ message: "Email or password is invalid" });
-    const token = jwt.sign(
-      { userId: user._id, role: user.role },
-      process.env.SECRET_KEY,
-      { expiresIn: "1h" }
-    );
-    res.status(200).json({ token });
-  } catch (err) {
-    res.status(500).json({ message: "Server error" });
+router.post(
+  "/login",
+  [
+    body("email").isEmail().withMessage("Invalid email format"),
+    body("password").notEmpty().withMessage("Password is required"),
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const { email, password } = req.body;
+    try {
+      const user = await User.findOne({ email });
+      if (!user)
+        return res
+          .status(404)
+          .json({ message: "Email or password is invalid" });
+      const isMatch = await bcrypt.compare(password, user.password);
+      if (!isMatch)
+        return res
+          .status(400)
+          .json({ message: "Email or password is invalid" });
+      const token = jwt.sign(
+        { userId: user._id, role: user.role },
+        process.env.SECRET_KEY,
+        { expiresIn: "1h" }
+      );
+      res.status(200).json({ token });
+    } catch (err) {
+      res.status(500).json({ message: "Server error" });
+    }
   }
-});
+);
 
 /**
  * @swagger
@@ -211,13 +249,16 @@ router.delete("/favorites/:productId", auth, async (req, res) => {
  *       500:
  *         description: Server error
  */
-router.get('/favorites', auth, async (req,res)=>{
+router.get("/favorites", auth, async (req, res) => {
   try {
-    const user = await User.findById(req.user.userId).populate('favoriteProducts', 'name');
+    const user = await User.findById(req.user.userId).populate(
+      "favoriteProducts",
+      "name"
+    );
     res.status(200).json({ favoriteProducts: user.favoriteProducts });
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err.message });
   }
-})
+});
 
 module.exports = router;

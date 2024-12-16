@@ -1,14 +1,15 @@
+const express = require("express");
+const { body, validationResult } = require("express-validator");
+const Category = require("../models/Category");
+const auth = require("../middlewares/auth");
+const router = express.Router();
+
 /**
  * @swagger
  * tags:
  *   name: Categories
  *   description: Manage product categories
  */
-
-const express = require("express");
-const Category = require("../models/Category");
-const auth = require("../middlewares/auth");
-const router = express.Router();
 
 /**
  * @swagger
@@ -37,33 +38,52 @@ const router = express.Router();
  *     responses:
  *       201:
  *         description: Category successfully created
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 _id:
- *                   type: string
- *                   description: The auto-generated ID of the category
- *                 name:
- *                   type: string
- *                 description:
- *                   type: string
  *       400:
- *         description: Error adding category
+ *         description: Validation error
  *       500:
  *         description: Internal server error
  */
-router.post("/", auth, async (req, res) => {
-  const { name, description } = req.body;
-  try {
-    const category = new Category({ name, description });
-    await category.save();
-    res.status(201).json(category);
-  } catch (err) {
-    res.status(400).json({ message: "Error adding category", error: err });
+router.post(
+  "/",
+  auth,
+  [
+    body("name")
+      .trim()
+      .notEmpty()
+      .withMessage("Name is required.")
+      .isLength({ min: 3 })
+      .withMessage("Name must be at least 3 characters long."),
+    body("description")
+      .trim()
+      .notEmpty()
+      .withMessage("Description is required.")
+      .isLength({ min: 10 })
+      .withMessage("Description must be at least 10 characters long."),
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        errors: errors.array().map((error) => ({
+          field: error.param,
+          message: error.msg,
+        })),
+      });
+    }
+
+    const { name, description } = req.body;
+    try {
+      const category = new Category({ name, description });
+      await category.save();
+      res.status(201).json(category);
+    } catch (err) {
+      res.status(500).json({
+        message: "Internal server error",
+        error: err.message,
+      });
+    }
   }
-});
+);
 
 /**
  * @swagger

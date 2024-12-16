@@ -9,6 +9,8 @@ const express = require("express");
 const router = express.Router();
 const Product = require("../models/Product");
 const auth = require("../middlewares/auth");
+const { body, validationResult, param } = require("express-validator");
+
 
 /**
  * @swagger
@@ -50,16 +52,32 @@ const auth = require("../middlewares/auth");
  *       400:
  *         description: Invalid input
  */
-router.post("/", auth, async (req, res) => {
-  try {
-    const { name, price, category, description, image } = req.body;
-    const product = new Product({ name, price, category, description, image });
-    await product.save();
-    res.status(201).json(product);
-  } catch (error) {
-    res.status(400).json({ message: error.message });
+router.post(
+  "/",
+  auth,
+  [
+    body("name").notEmpty().withMessage("Product name is required"),
+    body("price")
+      .isFloat({ min: 0 })
+      .withMessage("Price must be a positive number"),
+    body("category").notEmpty().withMessage("Category is required"),
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    try {
+      const { name, price, category, description, image } = req.body;
+      const product = new Product({ name, price, category, description, image });
+      await product.save();
+      res.status(201).json(product);
+    } catch (error) {
+      res.status(400).json({ message: error.message });
+    }
   }
-});
+);
 
 /**
  * @swagger
@@ -227,16 +245,34 @@ router.get("/:id", auth, async (req, res) => {
  *       400:
  *         description: Invalid input
  */
-router.put("/:id", auth, async (req, res) => {
-  try {
-    const updates = req.body;
-    const product = await Product.findByIdAndUpdate(req.params.id, updates, { new: true });
-    if (!product) return res.status(404).json({ message: "Product not found" });
-    res.status(200).json(product);
-  } catch (error) {
-    res.status(400).json({ message: error.message });
+router.put(
+  "/:id",
+  auth,
+  [
+    param("id").isMongoId().withMessage("Invalid product ID"),
+    body("name").notEmpty().withMessage("Product name is required"),
+    body("price")
+      .isFloat({ min: 0 })
+      .withMessage("Price must be a positive number"),
+    body("category").notEmpty().withMessage("Category is required"),
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    try {
+      const updates = req.body;
+      const product = await Product.findByIdAndUpdate(req.params.id, updates, { new: true });
+      if (!product) return res.status(404).json({ message: "Product not found" });
+      res.status(200).json(product);
+    } catch (error) {
+      res.status(400).json({ message: error.message });
+    }
   }
-});
+);
+
 
 /**
  * @swagger

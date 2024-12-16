@@ -14,8 +14,11 @@ const Review = require("../models/Review");
 const DiscountCode = require("../models/DiscountCode");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const { body, validationResult } = require("express-validator");
+
 
 const router = express.Router();
+
 
 /**
  * @swagger
@@ -43,30 +46,49 @@ const router = express.Router();
  *       201:
  *         description: User registered successfully
  *       400:
- *         description: User already exists
+ *         description: Validation error or user already exists
  *       500:
  *         description: Server error
  */
-router.post("/register", async (req, res) => {
-  const { username, email, password } = req.body;
-  try {
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({ message: "User already exists" });
+router.post(
+  "/register",
+  [
+    body("username").notEmpty().withMessage("Username is required"),
+    body("email").isEmail().withMessage("Valid email is required"),
+    body("password")
+      .isLength({ min: 6 })
+      .withMessage("Password must be at least 6 characters long"),
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
     }
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const user = new User({
-      username,
-      email,
-      password: hashedPassword,
-      role: "admin",
-    });
-    await user.save();
-    res.status(201).json({ message: "User registered successfully" });
-  } catch (err) {
-    res.status(500).json({ message: "Server error" });
+
+    const { username, email, password } = req.body;
+    try {
+      const existingUser = await User.findOne({$or: [
+        { username: username },
+        { email: email }
+      ]});
+      if (existingUser) {
+        return res.status(400).json({ message: "Username or email already exists" });
+      }
+      const hashedPassword = await bcrypt.hash(password, 10);
+      const user = new User({
+        username,
+        email,
+        password: hashedPassword,
+        role: "admin",
+      });
+      await user.save();
+      res.status(201).json({ message: "User registered successfully" });
+    } catch (err) {
+      res.status(500).json({ message: "Server error" });
+    }
   }
-});
+);
+
 
 /**
  * @swagger
@@ -90,40 +112,48 @@ router.post("/register", async (req, res) => {
  *     responses:
  *       200:
  *         description: Login successful, token returned
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 token:
- *                   type: string
- *                   description: JWT token for authenticated user
  *       400:
  *         description: Invalid email or password
  *       404:
  *         description: User not found
+ *       422:
+ *         description: Validation error
  *       500:
  *         description: Server error
  */
-router.post("/login", async (req, res) => {
-  const { email, password } = req.body;
-  try {
-    const user = await User.findOne({ email });
-    if (!user)
-      return res.status(404).json({ message: "Email or password is invalid" });
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch)
-      return res.status(400).json({ message: "Email or password is invalid" });
-    const token = jwt.sign(
-      { userId: user._id, role: user.role },
-      process.env.SECRET_KEY,
-      { expiresIn: "1h" }
-    );
-    res.status(200).json({ token });
-  } catch (err) {
-    res.status(500).json({ message: "Server error" });
+router.post(
+  "/login",
+  [
+    body("email").isEmail().withMessage("A valid email is required"),
+    body("password").notEmpty().withMessage("Password is required"),
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(422).json({ errors: errors.array() });
+    }
+
+    const { email, password } = req.body;
+    try {
+      const user = await User.findOne({ email });
+      if (!user)
+        return res.status(404).json({ message: "Email or password is invalid" });
+
+      const isMatch = await bcrypt.compare(password, user.password);
+      if (!isMatch)
+        return res.status(400).json({ message: "Email or password is invalid" });
+
+      const token = jwt.sign(
+        { userId: user._id, role: user.role },
+        process.env.SECRET_KEY,
+        { expiresIn: "1h" }
+      );
+      res.status(200).json({ token });
+    } catch (err) {
+      res.status(500).json({ message: "Server error" });
+    }
   }
-});
+);
 
 /**
  * @swagger

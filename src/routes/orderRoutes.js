@@ -10,6 +10,7 @@ const Order = require("../models/Order");
 const Cart = require("../models/Cart");
 const auth = require("../middlewares/auth");
 const router = express.Router();
+const { body, param, validationResult } = require("express-validator");
 
 /**
  * @swagger
@@ -29,82 +30,64 @@ const router = express.Router();
  *     responses:
  *       201:
  *         description: Order placed successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: Order placed successfully
- *                 order:
- *                   type: object
- *                   properties:
- *                     _id:
- *                       type: string
- *                       description: The ID of the created order
- *                     user:
- *                       type: string
- *                       description: User ID
- *                     items:
- *                       type: array
- *                       items:
- *                         type: object
- *                         properties:
- *                           product:
- *                             type: string
- *                             description: Product ID
- *                           quantity:
- *                             type: number
- *                             description: Quantity of the product
- *                     totalAmount:
- *                       type: number
- *                       description: Total price for the order
- *                     status:
- *                       type: string
- *                       description: Status of the order
  *       400:
- *         description: Cart is empty or invalid
+ *         description: Invalid input or cart is empty
  *       500:
  *         description: Error placing the order
  */
-router.post("/:userId", auth, async (req, res) => {
-  const { userId } = req.params;
-  try {
-    const cart = await Cart.findOne({ user: userId }).populate("items.product");
-    if (!cart || cart.items.length === 0) {
-      return res.status(400).json({ message: "Cart is empty" });
+router.post(
+  "/:userId",
+  auth,
+  [
+    param("userId")
+      .isMongoId()
+      .withMessage("Invalid user ID format"),
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
     }
 
-    const items = cart.items.map((item) => ({
-      product: item.product,
-      quantity: item.quantity,
-    }));
+    const { userId } = req.params;
 
-    const totalAmount = items.reduce(
-      (total, item) => total + item.quantity * item.product.price,
-      0
-    );
+    try {
+      const cart = await Cart.findOne({ user: userId }).populate("items.product");
 
-    const newOrder = new Order({
-      user: userId,
-      items,
-      totalAmount,
-      status: "pending",
-    });
+      if (!cart || cart.items.length === 0) {
+        return res.status(400).json({ message: "Cart is empty" });
+      }
 
-    await newOrder.save();
-    await Cart.findOneAndDelete({ userId });
+      const items = cart.items.map((item) => ({
+        product: item.product,
+        quantity: item.quantity,
+      }));
 
-    res
-      .status(201)
-      .json({ message: "Order placed successfully", order: newOrder });
-  } catch (err) {
-    res
-      .status(500)
-      .json({ message: "Error placing order", error: err.message });
+      const totalAmount = items.reduce(
+        (total, item) => total + item.quantity * item.product.price,
+        0
+      );
+
+      const newOrder = new Order({
+        user: userId,
+        items,
+        totalAmount,
+        status: "pending",
+      });
+
+      await newOrder.save();
+      await Cart.findOneAndDelete({ user: userId });
+
+      res
+        .status(201)
+        .json({ message: "Order placed successfully", order: newOrder });
+    } catch (err) {
+      res
+        .status(500)
+        .json({ message: "Error placing order", error: err.message });
+    }
   }
-});
+);
 
 /**
  * @swagger

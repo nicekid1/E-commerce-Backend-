@@ -1,14 +1,9 @@
-/**
- * @swagger
- * tags:
- *   name: Reviews
- *   description: Review management routes for products
- */
-
 const express = require("express");
+const { body, param, validationResult } = require("express-validator");
 const mongoose = require("mongoose");
-const Review = require("../models/Review");
 const auth = require("../middlewares/auth");
+const Review = require("../models/Review"); 
+
 const router = express.Router();
 
 /**
@@ -52,39 +47,52 @@ const router = express.Router();
  *       500:
  *         description: Error adding the review
  */
-router.post("/:productId", auth, async (req, res) => {
-  const { comment, rating } = req.body;
-  const { productId } = req.params;
-  const userId = req.user.userId;
+router.post(
+  "/:productId",
+  auth,
+  [
+    param("productId")
+      .custom((value) => mongoose.Types.ObjectId.isValid(value))
+      .withMessage("Invalid product ID"),
 
-  try {
-    if (!rating || rating < 1 || rating > 5) {
-      return res
-        .status(400)
-        .json({ message: "Rating must be between 1 and 5" });
-    }
-    if (!comment || comment.trim() === "") {
-      return res.status(400).json({ message: "Comment cannot be empty" });
-    }
-    if (!mongoose.Types.ObjectId.isValid(productId)) {
-      return res.status(400).json({ message: "Invalid product ID" });
+    body("rating")
+      .isInt({ min: 1, max: 5 })
+      .withMessage("Rating must be a number between 1 and 5"),
+
+    body("comment")
+      .trim()
+      .notEmpty()
+      .withMessage("Comment cannot be empty")
+      .isLength({ min: 5 })
+      .withMessage("Comment must be at least 5 characters long"),
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
     }
 
-    const review = new Review({
-      user: userId,
-      product: productId,
-      comment,
-      rating,
-    });
-    await review.save();
+    const { comment, rating } = req.body;
+    const { productId } = req.params;
+    const userId = req.user.userId;
 
-    res.status(201).json({ message: "Review added successfully", review });
-  } catch (err) {
-    res
-      .status(500)
-      .json({ message: "Error adding comment", error: err.message });
+    try {
+      const review = new Review({
+        user: userId,
+        product: productId,
+        comment,
+        rating,
+      });
+      await review.save();
+
+      res.status(201).json({ message: "Review added successfully", review });
+    } catch (err) {
+      res
+        .status(500)
+        .json({ message: "Error adding comment", error: err.message });
+    }
   }
-});
+);
 
 /**
  * @swagger
@@ -107,17 +115,33 @@ router.post("/:productId", auth, async (req, res) => {
  *       500:
  *         description: Error retrieving reviews
  */
-router.get("/:productId", auth, async (req, res) => {
-  const { productId } = req.params;
-  try {
-    const comments = await Review.find({ product: productId }).populate(
-      "user",
-      "username"
-    );
-    res.status(200).json(comments);
-  } catch (err) {
-    res.status(500).json({ message: "Error retrieving comments", error: err });
+router.get(
+  "/:productId",
+  auth,
+  [
+    param("productId")
+      .custom((value) => mongoose.Types.ObjectId.isValid(value))
+      .withMessage("Invalid product ID"),
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const { productId } = req.params;
+    try {
+      const comments = await Review.find({ product: productId }).populate(
+        "user",
+        "username"
+      );
+      res.status(200).json(comments);
+    } catch (err) {
+      res
+        .status(500)
+        .json({ message: "Error retrieving comments", error: err.message });
+    }
   }
-});
+);
 
 module.exports = router;
